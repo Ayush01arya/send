@@ -7,7 +7,6 @@ app = Flask(__name__)
 
 @app.route('/send-email', methods=['POST'])
 def send_email():
-    # Get email credentials & recipient from headers
     sender_email = request.headers.get('email-id')
     sender_password = request.headers.get('email-password')
     recipient_email = request.headers.get('recipient-email')
@@ -15,7 +14,6 @@ def send_email():
     if not sender_email or not sender_password or not recipient_email:
         return jsonify({"error": "Missing headers: email-id, email-password, recipient-email"}), 400
 
-    # Get subject and body from JSON payload
     data = request.get_json()
     subject = data.get('subject')
     body = data.get('body')
@@ -24,14 +22,12 @@ def send_email():
         return jsonify({"error": "Missing body fields: subject, body"}), 400
 
     try:
-        # Compose the message
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = recipient_email
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'plain'))
 
-        # Send the email using Gmail SMTP
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
             server.login(sender_email, sender_password)
@@ -43,6 +39,11 @@ def send_email():
         return jsonify({"error": str(e)}), 500
 
 
-# Vercel requires this for compatibility
+# Only for Vercel – ignore during local run
 def handler(request, context):
     return app(request, context)
+
+
+# ✅ This part runs the API server locally
+if __name__ == '__main__':
+    app.run(debug=True)
